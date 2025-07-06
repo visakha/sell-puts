@@ -33,14 +33,19 @@
         </yAxis>
     </LineChart>
 <Label text="Trading Journal"/>
-<TableView fx:id="journalTable">
+<TableView fx:id="journalTable" prefHeight="200.0">
     <columns>
-        <TableColumn text="Ticker" fx:id="journalTickerColumn"/>
-        <TableColumn text="Expiry" fx:id="journalExpiryColumn"/>
-        <TableColumn text="Strike Price" fx:id="journalStrikePriceColumn"/>
-        <TableColumn text="Premium" fx:id="journalPremiumColumn"/>
-        <TableColumn text="Profit" fx:id="journalProfitColumn"/>
+        <TableColumn fx:id="journalTickerColumn" text="Ticker" />
+        <TableColumn fx:id="journalExpiryColumn" text="Expiry" />
+        <TableColumn fx:id="journalStrikePriceColumn" text="Strike Price" />
+        <TableColumn fx:id="journalPremiumColumn" text="Premium" />
+        <TableColumn fx:id="journalProfitColumn" text="Profit" />
+        <TableColumn fx:id="journalStatusColumn" text="Status" />
+        <TableColumn fx:id="journalActionColumn" text="Action" />
     </columns>
+    <placeholder>
+        <Label text="No trades yet. Double-click an option above to sell a put." />
+    </placeholder>
 </TableView>
 <HBox spacing="10.0">
     <Label text="Filter by Ticker:"/>
