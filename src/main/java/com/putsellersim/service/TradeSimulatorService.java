@@ -20,6 +20,7 @@ public class TradeSimulatorService {
         if (cash >= marginRequired) {
             soldPuts.add(option);
             cash -= marginRequired;
+            System.out.println("sellPut: Sold " + option.ticker() + " exp " + option.expiry() + ", soldPuts size=" + soldPuts.size());
         } else {
             throw new IllegalStateException("Insufficient margin to sell this put.");
         }
@@ -37,6 +38,16 @@ public class TradeSimulatorService {
                 expiredPuts.add(option);
                 iterator.remove();
             }
+        }
+    }
+
+    public void closePut(PutOption option, double currentPrice) {
+        if (soldPuts.remove(option)) {
+            double intrinsic = Math.max(0, option.strikePrice() - currentPrice);
+            double pnl = (option.premium() - intrinsic) * 100;
+            cash += option.strikePrice() * 100 + pnl;
+            expiredPuts.add(option);
+            System.out.println("closePut: Closed " + option.ticker() + " exp " + option.expiry() + ", pnl=" + pnl);
         }
     }
 

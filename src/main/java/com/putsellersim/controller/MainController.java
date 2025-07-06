@@ -59,22 +59,28 @@ public class MainController {
     private LineChart<Number, Number> pnlChart;
 
     @FXML
-    private TableView<PutOption> journalTable;
+    private TableView<JournalRow> journalTable;
 
     @FXML
-    private TableColumn<PutOption, String> journalTickerColumn;
+    private TableColumn<JournalRow, String> journalTickerColumn;
 
     @FXML
-    private TableColumn<PutOption, LocalDate> journalExpiryColumn;
+    private TableColumn<JournalRow, LocalDate> journalExpiryColumn;
 
     @FXML
-    private TableColumn<PutOption, Double> journalStrikePriceColumn;
+    private TableColumn<JournalRow, Double> journalStrikePriceColumn;
 
     @FXML
-    private TableColumn<PutOption, Double> journalPremiumColumn;
+    private TableColumn<JournalRow, Double> journalPremiumColumn;
 
     @FXML
-    private TableColumn<PutOption, Double> journalProfitColumn;
+    private TableColumn<JournalRow, Double> journalProfitColumn;
+
+    @FXML
+    private TableColumn<JournalRow, String> journalStatusColumn;
+
+    @FXML
+    private TableColumn<JournalRow, Void> journalActionColumn;
 
     private int pnlCounter = 0;
     private final XYChart.Series<Number, Number> pnlSeries = new XYChart.Series<>();
@@ -83,6 +89,24 @@ public class MainController {
     private final TradeSimulatorService simulator;
 
     private ObservableList<PutOption> optionsList = FXCollections.observableArrayList();
+    private ObservableList<JournalRow> journalRows = FXCollections.observableArrayList();
+
+    private static class JournalRow {
+        final PutOption option;
+        final String status;
+        final double profit;
+        JournalRow(PutOption option, String status, double profit) {
+            this.option = option;
+            this.status = status;
+            this.profit = profit;
+        }
+        public String getTicker() { return option.ticker(); }
+        public LocalDate getExpiry() { return option.expiry(); }
+        public Double getStrikePrice() { return option.strikePrice(); }
+        public Double getPremium() { return option.premium(); }
+        public Double getProfit() { return profit; }
+        public String getStatus() { return status; }
+    }
 
     public MainController(OptionDataService dataService, TradeSimulatorService simulator) {
         this.dataService = dataService;
@@ -103,10 +127,33 @@ public class MainController {
             strikePriceColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().strikePrice()));
             premiumColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().premium()));
 
-            journalTickerColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().ticker()));
-            journalExpiryColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().expiry()));
-            journalStrikePriceColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().strikePrice()));
-            journalPremiumColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().premium()));
+            journalTickerColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getTicker()));
+            journalExpiryColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getExpiry()));
+            journalStrikePriceColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getStrikePrice()));
+            journalPremiumColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getPremium()));
+            journalProfitColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getProfit()));
+            journalStatusColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getStatus()));
+
+            journalActionColumn.setCellFactory(col -> new TableCell<>() {
+                private final Button closeButton = new Button("Close");
+                {
+                    closeButton.setOnAction(e -> {
+                        JournalRow row = getTableView().getItems().get(getIndex());
+                        if (row.status.equals("Open")) {
+                            closeTrade(row.option);
+                        }
+                    });
+                }
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || !"Open".equals(getTableView().getItems().get(getIndex()).status)) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(closeButton);
+                    }
+                }
+            });
 
             optionsList.setAll(dataService.loadOptions());
             tableView.setItems(optionsList);
@@ -126,6 +173,7 @@ public class MainController {
                 try {
                     simulator.sellPut(selected);
                     updateLabels();
+                    updateJournal();
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "Sold 1 Put for " + selected.ticker());
                     alert.show();
                 } catch (IllegalStateException ex) {
@@ -184,7 +232,19 @@ public class MainController {
     }
 
     private void updateJournal() {
-        journalTable.getItems().setAll(simulator.getExpiredPuts());
+        journalRows.clear();
+        for (PutOption o : simulator.getSoldPuts()) {
+            journalRows.add(new JournalRow(o, "Open", 0.0));
+        }
+        for (PutOption o : simulator.getExpiredPuts()) {
+            double profit = (o.premium()) * 100; // You can improve this logic if needed
+            journalRows.add(new JournalRow(o, "Expired", profit));
+        }
+        System.out.println("updateJournal: journalRows size = " + journalRows.size());
+        for (JournalRow row : journalRows) {
+            System.out.println("JournalRow: " + row.getTicker() + ", status=" + row.getStatus());
+        }
+        journalTable.setItems(journalRows);
     }
 
     @FXML
@@ -197,5 +257,18 @@ public class MainController {
     private void addCash(ActionEvent event) {
         simulator.addCash(10000.0);
         updateLabels();
+    }
+
+    private void closeTrade(PutOption option) {
+        simulator.closePut(option, getCurrentPrice());
+        updateLabels();
+        updateJournal();
+    }
+    private double getCurrentPrice() {
+        try {
+            return Double.parseDouble(currentPriceField.getText());
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 }
