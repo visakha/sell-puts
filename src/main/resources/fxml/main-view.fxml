@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml" fx:controller="com.putsellersim.controller.MainController">
+    <TableView fx:id="tableView" VBox.vgrow="ALWAYS" prefHeight="400.0">
+        <columns>
+            <TableColumn text="Ticker" fx:id="tickerColumn"/>
+            <TableColumn text="Expiry" fx:id="expiryColumn"/>
+            <TableColumn text="Strike Price" fx:id="strikePriceColumn"/>
+            <TableColumn text="Premium" fx:id="premiumColumn"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10.0">
+        <Label text="Current Price:"/>
+        <TextField fx:id="currentPriceField" />
+        <Button text="Update PnL" onAction="#updatePnL" />
+        <Button text="Reload" onAction="#reloadOptions" />
+        <Button text="Add 10K" onAction="#addCash" />
+    </HBox>
+    <Label fx:id="balanceLabel" text="Cash Balance:"/>
+    <Label fx:id="marginLabel" text="Margin Used:"/>
+    <Label fx:id="pnlLabel" text="Unrealized PnL:"/>
+
+    <LineChart fx:id="pnlChart" title="PnL Over Time">
+        <xAxis>
+            <NumberAxis label="Update Count"/>
+        </xAxis>
+        <yAxis>
+            <NumberAxis label="Unrealized PnL ($)"/>
+        </yAxis>
+    </LineChart>
+<Label text="Trading Journal"/>
+<TableView fx:id="journalTable">
+    <columns>
+        <TableColumn text="Ticker" fx:id="journalTickerColumn"/>
+        <TableColumn text="Expiry" fx:id="journalExpiryColumn"/>
+        <TableColumn text="Strike Price" fx:id="journalStrikePriceColumn"/>
+        <TableColumn text="Premium" fx:id="journalPremiumColumn"/>
+        <TableColumn text="Profit" fx:id="journalProfitColumn"/>
+    </columns>
+</TableView>
+<HBox spacing="10.0">
+    <Label text="Filter by Ticker:"/>
+    <TextField fx:id="filterTickerField"/>
+    <Button text="Apply Filter" onAction="#applyFilter"/>
+    <Button text="Export CSV" onAction="#exportJournal"/>
+</HBox>
+<Label fx:id="roiLabel" text="ROI:"/>
+    <Label fx:id="winRateLabel" text="Win Rate:"/>
+</VBox>
